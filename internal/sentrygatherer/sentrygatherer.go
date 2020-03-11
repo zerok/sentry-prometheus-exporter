@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
 	prometheus "github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
+	"github.com/rs/zerolog"
 )
 
 type Options struct {
@@ -78,15 +78,16 @@ func (g *SentryGatherer) gatherOrgTeamsTotal(ctx context.Context) (int, error) {
 }
 
 func (g *SentryGatherer) updateAll(ctx context.Context) {
-	log.Print("Updating metrics.")
+	logger := zerolog.Ctx(ctx)
+	logger.Info().Msg("Updating metrics.")
 	count, err := g.gatherOrgProjectsTotal(ctx)
 	if err != nil {
-		log.Print(err.Error())
+		logger.Warn().Err(err).Msg("Failed to gather project totals.")
 	}
 	g.metricOrgProjectsTotal.Set(float64(count))
 	count, err = g.gatherOrgTeamsTotal(ctx)
 	if err != nil {
-		log.Print(err.Error())
+		logger.Warn().Err(err).Msg("Failed to gather team totals.")
 	}
 	g.metricOrgTeamsTotal.Set(float64(count))
 }

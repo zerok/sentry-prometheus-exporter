@@ -2,17 +2,18 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/zerolog"
 	"github.com/spf13/pflag"
 	"github.com/zerok/sentry-prometheus-exporter/internal/sentrygatherer"
 )
 
 func main() {
+	logger := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr}).Level(zerolog.InfoLevel).With().Timestamp().Logger()
 	var addr string
 	var orgName string
 	var tickerInterval time.Duration
@@ -29,15 +30,16 @@ func main() {
 		TickerInterval: tickerInterval,
 	})
 	if err != nil {
-		log.Fatal(err.Error())
+		logger.Fatal().Err(err).Msg("Failed to setup gatherer.")
 	}
-	g.Start(ctx)
+	g.Start(logger.WithContext(ctx))
 	srv := &http.Server{}
 	srv.Handler = promhttp.HandlerFor(g, promhttp.HandlerOpts{
 		EnableOpenMetrics: true,
 	})
 	srv.Addr = addr
+	logger.Info().Msgf("Starting server on %s", addr)
 	if err := srv.ListenAndServe(); err != nil {
-		log.Fatal(err.Error())
+		logger.Fatal().Err(err).Msg("Failed to start HTTP server.")
 	}
 }
