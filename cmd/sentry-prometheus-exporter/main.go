@@ -17,10 +17,16 @@ func main() {
 	var addr string
 	var orgName string
 	var tickerInterval time.Duration
+	var verbose bool
 	pflag.StringVar(&addr, "addr", "localhost:9200", "Address to listen on")
 	pflag.StringVar(&orgName, "organization", "", "Name of the organization to watch")
 	pflag.DurationVar(&tickerInterval, "ticker-interval", time.Second*60, "Update ticker interval")
+	pflag.BoolVar(&verbose, "verbose", false, "Verbose logging")
 	pflag.Parse()
+
+	if verbose {
+		logger = logger.Level(zerolog.DebugLevel)
+	}
 
 	ctx := context.Background()
 
